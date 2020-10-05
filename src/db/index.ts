@@ -6,6 +6,8 @@ const DB_USER = process.env.DB_USER;
 const DB_PASSWORD = process.env.DB_PASSWORD;
 const DB_DATABASE = process.env.DB_DATABASE;
 
+console.log('DB configs =>', { DB_USER, DB_HOST, DB_DATABASE, DB_PORT});
+
 const pool = new Pool({
   user: DB_USER,
   host: DB_HOST,
