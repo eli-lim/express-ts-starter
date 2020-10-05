@@ -1,6 +1,7 @@
 require('./env');
 import express from "express";
 import bodyParser from "body-parser";
+import cors from 'cors';
 import auth from './middleware/auth';
 import sql from "sql-template-strings";
 import fs from 'fs';
@@ -14,6 +15,7 @@ const app = express();
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET as string;
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(auth({
   exclude: ['/register', '/ping']
