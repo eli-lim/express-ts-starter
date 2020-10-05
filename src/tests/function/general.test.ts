@@ -2,10 +2,10 @@ import request from 'supertest';
 import app from '../../server';
 
 describe('GET /ping', () => {
-  it('responds with heartbeat message', done => {
-    request(app)
+  it('responds with heartbeat message', async () => {
+    await request(app)
       .get('/ping')
       .expect(200)
-      .expect('pong!', done);
+      .expect('pong!');
   })
 })

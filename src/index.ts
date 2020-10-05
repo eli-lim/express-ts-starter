@@ -1,3 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+dotenv.config({
+  path: `.env.${process.env.NODE_ENV}`
+});
 import app from "./server";
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
