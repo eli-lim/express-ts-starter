@@ -1,10 +1,42 @@
+require('../../env');
 import request from "supertest";
 import app from "../../server";
 import {Attempt, Question, Student} from "../../types/domain";
 
+export function post(endpoint: string) {
+  return request(app)
+    .post(endpoint)
+    .set({
+      ADMINSECRET: process.env.ADMIN_SECRET
+    })
+}
+
+export function get(endpoint: string) {
+  return request(app)
+    .get(endpoint)
+    .set({
+      ADMINSECRET: process.env.ADMIN_SECRET
+    })
+}
+
+export function put(endpoint: string) {
+  return request(app)
+    .put(endpoint)
+    .set({
+      ADMINSECRET: process.env.ADMIN_SECRET
+    })
+}
+
+export function del(endpoint: string) {
+  return request(app)
+    .delete(endpoint)
+    .set({
+      ADMINSECRET: process.env.ADMIN_SECRET
+    })
+}
+
 export async function resetDb() {
-  await request(app)
-    .post('/resetdb')
+  await post('/resetdb')
     .send({
       ADMINSECRET: process.env.ADMIN_SECRET
     })
@@ -63,8 +95,7 @@ const attempts: { [id: number]: Attempt } = {
 
 export async function createStudents() {
   for (const student of Object.values(students)) {
-    await request(app)
-      .post('/student')
+    await post('/student')
       .send(student)
       .expect(200)
       .expect(res =>
@@ -75,8 +106,7 @@ export async function createStudents() {
 
 export async function createQuestions() {
   for (const question of Object.values(questions)) {
-    await request(app)
-      .post('/question')
+    await post('/question')
       .send(question)
       .expect(200)
       .expect(res => expect(res.body).toMatchObject(question));
@@ -85,8 +115,7 @@ export async function createQuestions() {
 
 export async function createAttempts() {
   for (const attempt of Object.values(attempts)) {
-    await request(app)
-      .post('/attempt')
+    await post('/attempt')
       .send(attempt)
       .expect(res => expect(res.body).toMatchObject(attempt));
   }

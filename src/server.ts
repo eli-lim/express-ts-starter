@@ -1,17 +1,23 @@
+require('./env');
 import express from "express";
 import bodyParser from "body-parser";
+import auth from './middleware/auth';
 import sql from "sql-template-strings";
 import fs from 'fs';
 import path from 'path';
+import jwt from 'jsonwebtoken';
 import pool from "./db";
 import { createUpdate } from "./db/helpers";
 import {Attempt, Question, Student} from "./types/domain";
 
 const app = express();
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET;
+const ADMIN_SECRET = process.env.ADMIN_SECRET as string;
 
 app.use(bodyParser.json());
+app.use(auth({
+  exclude: ['/register', '/ping']
+}))
 
 app.get("/ping", (req, res) => {
   res.send("pong!");
@@ -30,6 +36,33 @@ if (!process.env.PRODUCTION) {
   })
 }
 
+/** Auth Service **/
+app.post('/register', async (req, res) => {
+  const { email, name } = req.body as Student;
+  try {
+    const result = await pool.query(sql`
+        INSERT INTO student (email, name) 
+        VALUES (${email}, ${name}) 
+        RETURNING *
+    `);
+    const student = result.rows[0] as Student;
+    console.log('New student > ', student);
+    const token = jwt.sign(
+      {
+        ...student
+      },
+      ADMIN_SECRET,
+      {
+        expiresIn: '1d'
+      }
+    );
+    res.json({ token, student });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ error: "Email taken" })
+  }
+})
+
 /** Student Service **/
 app.get('/student', async (req, res) => {
   const result = await pool.query(sql`SELECT * FROM student`);
@@ -42,7 +75,7 @@ app.get('/student/:id', async (req, res) => {
     const result = await pool.query(sql`SELECT * FROM student WHERE id = ${id}`);
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(400).json({ "error": "Invalid credentials" });
+    res.status(400).json({ error: "Invalid id" });
   }
 })
 
@@ -56,7 +89,7 @@ app.post('/student', async (req, res) => {
     `);
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(400).json({ "error": "Email taken" });
+    res.status(400).json({ error: "Email taken" });
   }
 })
 
@@ -185,16 +218,23 @@ app.get('/attempt/:id', async (req, res) => {
 })
 
 app.post('/attempt', async (req, res) => {
-  const { student_id, question_id, score } = req.body as Attempt;
+  const { question_id, score } = req.body as Attempt;
+  let token = req.headers.authorization as string;
+  if (!token) {
+    res.status(403).json({ error: 'Unauthorized' });
+    return;
+  }
   try {
+    let { id } = jwt.verify(token.split(' ')[1], ADMIN_SECRET) as { id: number };
     const result = await pool.query(sql`
       INSERT INTO attempt (student_id, question_id, score) 
-      VALUES (${student_id}, ${question_id}, ${score})
+      VALUES (${id}, ${question_id}, ${score})
       RETURNING *
     `);
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(400).json({ error: err.toString() });
+    console.log(err);
+    res.status(400).json({ error: err.toString() })
   }
 })
 

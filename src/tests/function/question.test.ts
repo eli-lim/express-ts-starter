@@ -1,6 +1,4 @@
-import request from "supertest";
-import app from "../../server";
-import {createQuestions, data, resetDb} from "./helpers";
+import {createQuestions, data, del, get, put, resetDb} from "./helpers";
 
 const { questions } = data;
 
@@ -15,8 +13,7 @@ describe ('GET /question', () => {
   beforeEach(bootstrapDb);
 
   it('GET /question/1 => should return a question', async () => {
-    await request(app)
-      .get('/question/1')
+    await get('/question/1')
       .expect(200)
       .expect(res =>
         expect(res.body).toMatchObject(questions.FizzBuzz)
@@ -24,8 +21,7 @@ describe ('GET /question', () => {
   })
 
   it('GET /question => should return all questions', async () => {
-    await request(app)
-      .get('/question')
+    await get('/question')
       .expect(200)
       .expect(res =>
         expect(res.body).toMatchObject(Object.values(questions))
@@ -38,8 +34,7 @@ describe('PUT /question', () => {
   beforeEach(bootstrapDb);
 
   it('should update a question\'s fields', async () => {
-    await request(app)
-      .put('/question/1')
+    await put('/question/1')
       .send({
         name: 'Some Question',
       })
@@ -53,8 +48,7 @@ describe('PUT /question', () => {
         })
       )
 
-    await request(app)
-      .put('/question/1')
+    await put('/question/1')
       .send({
         stars: 10,
         test_case_count: 50
@@ -71,8 +65,7 @@ describe('PUT /question', () => {
   })
 
   it('should not be vulnerable to SQL injection', async () => {
-    await request(app)
-      .put(`/question/1'OR 1=1';--`)
+    await put(`/question/1'OR 1=1';--`)
       .send({
         name: "SQL INJECTED",
       })
@@ -86,8 +79,7 @@ describe('DELETE /question', () => {
   beforeEach(bootstrapDb);
 
   it('should delete a question', async () => {
-    await request(app)
-      .delete('/question/1')
+    await del('/question/1')
       .expect(200)
       .expect(res =>
         expect(res.body).toMatchObject({
@@ -99,8 +91,7 @@ describe('DELETE /question', () => {
   })
 
   it('should error when deleting non-existent question', async () => {
-    await request(app)
-      .delete('/question/100')
+    await del('/question/100')
       .expect(400)
       .expect(res =>
         expect(res.body).toMatchObject({
@@ -110,8 +101,7 @@ describe('DELETE /question', () => {
   })
 
   it('should not be vulnerable to SQL injection', async () => {
-    await request(app)
-      .delete(`/question/1'OR 1=1';--`)
+    await del(`/question/1'OR 1=1';--`)
       .expect(400)
       .expect(res =>
         expect(res.body).toMatchObject({
