@@ -18,7 +18,7 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET as string;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(auth({
-  exclude: ['/register', '/ping']
+  exclude: ['/register', '/ping'],
 }))
 
 app.get("/ping", (req, res) => {
@@ -228,15 +228,14 @@ app.post('/attempt', async (req, res) => {
   }
   try {
     let { id } = jwt.verify(token.split(' ')[1], ADMIN_SECRET) as { id: number };
-    const result = await pool.query(sql`
+    res.json({ status: 'ok' });
+    pool.query(sql`
       INSERT INTO attempt (student_id, question_id, score) 
       VALUES (${id}, ${question_id}, ${score})
       RETURNING *
     `);
-    res.json(result.rows[0]);
   } catch (err) {
     console.log(err);
-    res.status(400).json({ error: err.toString() })
   }
 })
 
